@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from binance.client import Client
 import keyboards.keyboards as kb
-from services.database import save_api_keys, get_api_keys  # ✅ Импорт работы с БД
+from services.database import save_api_keys, get_api_keys  
 
 router = Router()
 
@@ -14,7 +14,7 @@ class FormState(StatesGroup):
 @router.message(Command("start"))
 async def start_command(message: types.Message):
     user_id = message.from_user.id
-    user_data = get_api_keys(user_id)  # ✅ Проверяем, есть ли ключи в БД
+    user_data = get_api_keys(user_id)  
 
     if user_data:
         await message.answer("✅ Вы уже авторизованы! Можете пользоваться ботом.", reply_markup=kb.persistent_menu_keyboard)
@@ -46,7 +46,7 @@ async def handle_binance_api_keys(message: types.Message, state: FSMContext):
         client = Client(api_key, api_secret)
         client.get_account()
 
-        save_api_keys(user_id, api_key, api_secret)  # ✅ Сохраняем ключи в БД
+        save_api_keys(user_id, api_key, api_secret)
 
         await message.answer("✅ Авторизация успешна! Теперь у вас есть постоянное меню.", reply_markup=kb.persistent_menu_keyboard)
         await state.clear()

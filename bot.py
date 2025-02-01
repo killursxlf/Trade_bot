@@ -3,7 +3,7 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from config import API_TOKEN
-from services.database import create_tables  # ✅ Импортируем создание таблицы
+from services.database import create_tables 
 from handlers.auth_handler import router as auth_router
 from handlers.balance_handler import router as balance_router
 from handlers.currency_handler import router as currency_router
@@ -22,15 +22,14 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
-dp.include_router(auth_router)
-dp.include_router(balance_router)
-dp.include_router(currency_router)
-dp.include_router(menu_router)
-dp.include_router(alert_router)
-dp.include_router(favorites_router)
-dp.include_router(top_router)
-dp.include_router(hot_router)
-dp.include_router(volume_router)
+routers = [
+    auth_router, balance_router, currency_router, menu_router, 
+    alert_router, favorites_router, top_router, hot_router, volume_router
+]
+
+for router in routers:
+    dp.include_router(router)
+
 
 async def main():
     logging.info("Бот запущен 🚀")

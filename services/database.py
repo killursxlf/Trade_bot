@@ -44,12 +44,6 @@ def get_alerts():
         cursor.execute('SELECT user_id, pair, target_price FROM alerts')
         return cursor.fetchall()
 
-def delete_alert(user_id: int, pair: str):
-    with sqlite3.connect(DB_NAME) as conn:
-        cursor = conn.cursor()
-        cursor.execute('DELETE FROM alerts WHERE user_id = ? AND pair = ?', (user_id, pair))
-        conn.commit()
-
 def save_api_keys(user_id: int, api_key: str, api_secret: str):
     with sqlite3.connect(DB_NAME) as conn:
         cursor = conn.cursor()
@@ -72,10 +66,10 @@ def get_user_alerts(user_id: int):
         cursor.execute('SELECT pair, target_price FROM alerts WHERE user_id = ?', (user_id,))
         return cursor.fetchall()
 
-def delete_alert(user_id: int, pair: str):
+def delete_alert(user_id: int, pair: str, target_price: float):
     with sqlite3.connect(DB_NAME) as conn:
         cursor = conn.cursor()
-        cursor.execute('DELETE FROM alerts WHERE user_id = ? AND pair = ?', (user_id, pair))
+        cursor.execute('DELETE FROM alerts WHERE user_id = ? AND pair = ? AND target_price = ?', (user_id, pair, target_price))
         conn.commit()
 
 def save_favorite(user_id: int, pair: str):
@@ -91,4 +85,12 @@ def get_favorites(user_id: int):
     with sqlite3.connect(DB_NAME) as conn:
         cursor = conn.cursor()
         cursor.execute('SELECT pair FROM favorites WHERE user_id = ?', (user_id,))
-        return [row[0] for row in cursor.fetchall()]
+        result = cursor.fetchall()
+
+    return [row[0] for row in result]
+
+def delete_favorite(user_id: int, pair: str):
+    with sqlite3.connect(DB_NAME) as conn:
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM favorites WHERE user_id = ? AND pair = ?', (user_id, pair))
+        conn.commit()

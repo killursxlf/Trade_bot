@@ -5,6 +5,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery
 import keyboards.keyboards as kb
 from services.binance_service import get_trade_data
+from handlers.hot_handler import get_hot_coins_list
 
 router = Router()
 
@@ -13,8 +14,19 @@ class FormState(StatesGroup):
 
 @router.message(Command("currency"))
 async def currency_pair_reply(message: types.Message, state: FSMContext):
-    await message.reply("Введите валютную пару (например, BTCUSDT):")
+    hot_coins = get_hot_coins_list()  
+    keyboard = kb.get_hot_coins_keyboard(hot_coins)
+
+    await message.reply("Введите валютную пару (например, BTCUSDT) или выберите из списка:", reply_markup=keyboard)
     await state.set_state(FormState.waiting_for_currency_pair)
+
+@router.callback_query(lambda call: call.data.startswith("select_coin_"))
+async def select_hot_coin(call: CallbackQuery, state: FSMContext):
+    coin = call.data.replace("select_coin_", "", 1) + "USDT"  
+
+    await state.update_data(pair=coin) 
+    await call.message.edit_text(f"✅ Вы выбрали {coin}. Теперь выберите временной промежуток:", 
+                                 reply_markup=kb.get_timeframe_keyboard(coin))  
 
 @router.message(FormState.waiting_for_currency_pair)
 async def handle_currency_pair(message: types.Message, state: FSMContext):

@@ -5,6 +5,8 @@ from handlers.balance_handler import balance_reply
 from handlers.currency_handler import currency_pair_reply
 from handlers.volume_handler import top_volume_command
 from handlers.hot_handler import hot_coins_command
+from handlers.favorites_handler import show_favorites_command, add_favorite_command, delete_favorite_handler
+from handlers.alerts_handler import my_alerts_command
 from services.database import get_user_alerts
 import keyboards.keyboards as kb
 
@@ -81,4 +83,21 @@ async def reply_hot_coins_handler(message: types.Message):
 @router.message(lambda message: message.text == "📊 ТОП-5 по объёму")
 async def reply_top_volume_handler(message: types.Message):
     await top_volume_command(message)
+
+@router.message(lambda message: message.text == "⭐ Избранные монеты")
+async def reply_favorites_handler(message: types.Message):
+    await show_favorites_command(message)
+
+@router.callback_query(lambda call: call.data == "view_favorites")
+async def inline_favorites_handler(call: types.CallbackQuery):
+    await show_favorites_command(call)  
+
+
+@router.message(lambda message: message.text == "🔔 Алерты")
+async def reply_alerts_handler(message: types.Message):
+    await my_alerts_command(message)
+
+@router.callback_query(lambda call: call.data == "view_alerts")
+async def inline_alerts_handler(call: types.CallbackQuery):
+    await my_alerts_command(call.message)
 

@@ -26,11 +26,9 @@ async def check_alerts(bot: Bot):
                 
                 if last_price < target_price <= current_price:  
                     await bot.send_message(user_id, f"🚀 *Цена достигла цели!* {pair}: {current_price} USDT", parse_mode="Markdown")
-                    delete_alert(user_id, pair)
 
                 elif last_price > target_price >= current_price:  
                     await bot.send_message(user_id, f"📉 *Цена упала ниже цели!* {pair}: {current_price} USDT", parse_mode="Markdown")
-                    delete_alert(user_id, pair)
 
                 last_prices[pair] = current_price  
 

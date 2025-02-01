@@ -2,7 +2,6 @@ from binance.client import Client
 from services.database import get_api_keys
 
 def get_full_balance(user_id):
-    """Получает ВСЕ активы пользователя с переводом в USDT."""
     api_keys = get_api_keys(user_id)
     if not api_keys:
         return None
@@ -13,7 +12,6 @@ def get_full_balance(user_id):
     try:
         account_info = client.get_account()
         
-        # ✅ Фильтруем только те данные, где есть "price"
         tickers = {t["symbol"]: float(t["price"]) for t in client.get_ticker() if "price" in t}
 
         assets = []
@@ -26,16 +24,15 @@ def get_full_balance(user_id):
             total_balance = free_balance + locked_balance
 
             if total_balance > 0:
-                if asset_name == "USDT":  # Если это USDT, не нужно конвертировать
+                if asset_name == "USDT":  
                     balance_in_usdt = total_balance
                 else:
                     symbol = asset_name + "USDT"
-                    balance_in_usdt = total_balance * tickers.get(symbol, 0)  # ✅ Если цены нет, используем 0
+                    balance_in_usdt = total_balance * tickers.get(symbol, 0)  
 
                 total_balance_usdt += balance_in_usdt
                 assets.append((asset_name, total_balance, balance_in_usdt))
 
-        # Сортируем активы по убыванию баланса в USDT
         assets.sort(key=lambda x: x[2], reverse=True)
 
         return assets, total_balance_usdt
@@ -45,7 +42,6 @@ def get_full_balance(user_id):
         return None
 
 def get_trade_data(user_id, pair, interval):
-    """Получение информации о валютной паре"""
     api_keys = get_api_keys(user_id)
     if not api_keys:
         return None
@@ -87,4 +83,26 @@ def get_trade_data(user_id, pair, interval):
 
     except Exception as e:
         print(f"Ошибка получения данных о торговле: {e}")
+        return {"error": "Ошибка Binance API"}
+
+def get_fav_data(pair, interval="24h"):
+    client = Client()
+
+    try:
+        ticker = client.get_ticker(symbol=pair)
+        klines = client.get_klines(symbol=pair, interval="1d", limit=1)  
+
+        last_price = float(ticker.get('lastPrice', '0'))
+        volume_in_coins = float(klines[0][5])  
+        volume_in_usdt = volume_in_coins * last_price 
+
+        return {
+            "current_price": last_price,
+            "high_price": klines[0][2],  
+            "low_price": klines[0][3],   
+            "volume": volume_in_usdt    
+        }
+
+    except Exception as e:
+        print(f"Ошибка получения данных о {pair}: {e}")
         return {"error": "Ошибка Binance API"}
