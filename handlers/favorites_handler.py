@@ -48,22 +48,26 @@ async def delete_favorite_handler(call: types.CallbackQuery):
 
 @router.callback_query(lambda call: call.data.startswith("view_fav_"))
 async def view_favorite_handler(call: types.CallbackQuery):
-    pair = call.data.replace("view_fav_", "", 1)
-
-    trade_data = get_fav_data(pair, "24h")  
+    pair = call.data.replace("view_fav_", "", 1).strip()
     
-    if "error" in trade_data:
-        await call.answer(f"Ошибка: {trade_data['error']}")
+    if not pair or not pair.isalnum():
+        await call.answer("Некорректная монета.", show_alert=True)
         return
-
+    
+    trade_data = get_fav_data(pair, "24h")
+    
+    if "error" in trade_data or "current_price" not in trade_data:
+        await call.answer(f"Ошибка: {trade_data.get('error', 'Нет данных')}", show_alert=True)
+        return
+    
     response = (
-        f"📊 *{pair}*\n"
-        f"💰 Цена: {trade_data['current_price']} USDT\n"
-        f"📈 Макс: {trade_data['high_price']} USDT\n"
-        f"📉 Мин: {trade_data['low_price']} USDT\n"
+        f"📊 *{pair} за 24ч:*\n"
+        f"💰 Цена: {float(trade_data['current_price']):,.2f}\n"
+        f"📈 Макс: {float(trade_data['high_price']):,.2f}\n"
+        f"📉 Мин: {float(trade_data['low_price']):,.2f}\n"
         f"📊 Объём: {float(trade_data['volume']):,.2f} USDT"
     )
-
-    await call.message.edit_text(response, reply_markup=kb.get_favorites_keyboard(get_favorites(call.from_user.id)), parse_mode="Markdown")
-
-
+    
+    favorites = get_favorites(call.from_user.id)
+    reply_markup = kb.get_favorites_keyboard(favorites) if favorites else None
+    await call.message.edit_text(response, reply_markup=reply_markup, parse_mode="Markdown")

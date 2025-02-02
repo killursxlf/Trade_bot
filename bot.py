@@ -13,6 +13,7 @@ from handlers.top_handler import router as top_router
 from handlers.favorites_handler import router as favorites_router
 from handlers.volume_handler import router as volume_router
 from handlers.hot_handler import router as hot_router
+from handlers.ta_handler import router as ta_router
 from services.alerts_checker import check_alerts
 
 create_tables()
@@ -24,7 +25,7 @@ dp = Dispatcher(storage=MemoryStorage())
 
 routers = [
     auth_router, balance_router, currency_router, menu_router, 
-    alert_router, favorites_router, top_router, hot_router, volume_router
+    alert_router, favorites_router, top_router, hot_router, volume_router, ta_router
 ]
 
 for router in routers:

@@ -1,7 +1,6 @@
 from aiogram import Router, types, F
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command
-import re
 from services.database import save_alert, get_user_alerts, delete_alert
 from aiogram.fsm.state import State, StatesGroup
 import keyboards.keyboards as kb

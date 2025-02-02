@@ -1,6 +1,8 @@
 from binance.client import Client
 from services.database import get_api_keys
-
+import pandas as pd
+import talib
+    
 def get_full_balance(user_id):
     api_keys = get_api_keys(user_id)
     if not api_keys:
@@ -106,3 +108,82 @@ def get_fav_data(pair, interval="24h"):
     except Exception as e:
         print(f"Ошибка получения данных о {pair}: {e}")
         return {"error": "Ошибка Binance API"}
+
+def get_ta_data(user_id, pair, interval, limit=500):
+
+    api_keys = get_api_keys(user_id)
+    if not api_keys:
+        return {"error": "Пользователь не авторизован"}
+
+    api_key, api_secret = api_keys
+    client = Client(api_key, api_secret)
+
+    try:
+        klines = client.get_klines(symbol=pair, interval=interval, limit=limit)
+        
+        df = pd.DataFrame(klines, columns=[
+            "open_time", "open", "high", "low", "close", "volume",
+            "close_time", "quote_asset_volume", "number_of_trades",
+            "taker_buy_base_asset_volume", "taker_buy_quote_asset_volume", "ignore"
+        ])
+        
+        df['open'] = df['open'].astype(float)
+        df['high'] = df['high'].astype(float)
+        df['low'] = df['low'].astype(float)
+        df['close'] = df['close'].astype(float)
+        df['volume'] = df['volume'].astype(float)
+        
+        df['RSI'] = talib.RSI(df['close'], timeperiod=14)
+        df['SMA_50'] = talib.SMA(df['close'], timeperiod=50)
+        df['EMA_20'] = talib.EMA(df['close'], timeperiod=20)    
+
+        macd, macd_signal, macd_hist = talib.MACD(df['close'], fastperiod=12, slowperiod=26, signalperiod=9)
+        df['MACD'] = macd
+        df['MACD_signal'] = macd_signal
+        df['MACD_hist'] = macd_hist
+
+        upperband, middleband, lowerband = talib.BBANDS(df['close'], timeperiod=20, nbdevup=2, nbdevdn=2, matype=0)
+        df['BB_upper'] = upperband
+        df['BB_middle'] = middleband
+        df['BB_lower'] = lowerband
+        
+        df['ATR'] = talib.ATR(df['high'], df['low'], df['close'], timeperiod=14)
+        
+        df['OBV'] = talib.OBV(df['close'], df['volume'])
+        
+        df['ADX'] = talib.ADX(df['high'], df['low'], df['close'], timeperiod=14)
+        
+        latest = df.iloc[-1].to_dict()
+        
+        rsi = latest.get("RSI")
+        if rsi is None:
+            zone = "Нет данных для RSI"
+        elif rsi > 70:
+            zone = "Перекупленность"
+        elif rsi < 30:
+            zone = "Перепроданность"
+        else:
+            zone = "Нейтральная зона"
+        
+        return {
+            "pair": pair,
+            "interval": interval,
+            "last_close": latest.get("close"),
+            "RSI": latest.get("RSI"),
+            "SMA_50": latest.get("SMA_50"),
+            "EMA_20": latest.get("EMA_20"),
+            "MACD": latest.get("MACD"),
+            "MACD_signal": latest.get("MACD_signal"),
+            "MACD_hist": latest.get("MACD_hist"),
+            "BB_upper": latest.get("BB_upper"),
+            "BB_middle": latest.get("BB_middle"),
+            "BB_lower": latest.get("BB_lower"),
+            "ATR": latest.get("ATR"),
+            "OBV": latest.get("OBV"),
+            "ADX": latest.get("ADX"),
+            "zone": zone
+        }
+    
+    except Exception as e:
+        print(f"Ошибка получения данных для TA: {e}")
+        return {"error": "Ошибка получения данных для TA"}
